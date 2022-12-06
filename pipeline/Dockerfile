@@ -12,4 +12,4 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 COPY . ./pipeline
 
-CMD ["python", "./pipeline/load_data.py"]
+CMD ["python", "./pipeline/core/load_data.py"]

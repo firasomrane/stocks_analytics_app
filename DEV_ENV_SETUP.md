@@ -15,12 +15,13 @@ brew install pyenv-virtualenvwrapper
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
+pyenv global 3.10.4
 ```
 
-- Install python 3.10 and use it as default version
+ `pyenv global 3.10.4` is to install python 3.10 and use it as default version
 ```
 pyenv install -l # list all available python versions
-pyenv install 3.10.4 # If 3.10.4 is availabel
+pyenv install 3.10.4 # If 3.10.4 is available
 pyenv global 3.10.4
 ```
 Now running `python --version` should return
