@@ -15,10 +15,9 @@ brew install pyenv-virtualenvwrapper
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
-pyenv global 3.10.4
 ```
 
- `pyenv global 3.10.4` is to install python 3.10 and use it as default version
+- Install python 3.10 and use it as default version
 ```
 pyenv install -l # list all available python versions
 pyenv install 3.10.4 # If 3.10.4 is available
@@ -40,4 +39,5 @@ workon syrup_tech
 - Install some useful python packages
 
     - [`pip-compile`](https://pypi.org/project/pip-tools/) to better manage python dependencies `pip3 install pip-tools`
-    - [`pre-commit`](https://pre-commit.com/) for multi-language pre-commit hooks management `pip install pre-commit`
+    - [`pre-commit`](https://pre-commit.com/) for multi-language pre-commit hooks management `brew install pre-commit`
+`

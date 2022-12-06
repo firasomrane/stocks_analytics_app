@@ -1,6 +1,13 @@
 FROM python:3.9.15-alpine3.16
 
 ENV PIPELINE_DIR /usr/src/app
+
+RUN python -m pip install --upgrade pip==20.2 setuptools==57.5.0
+
+RUN apk add --no-cache --update \
+    python3 python3-dev gcc \
+    gfortran musl-dev
+
 RUN mkdir $PIPELINE_DIR
 WORKDIR $PIPELINE_DIR
 ENV PYTHONPATH ${PIPELINE_DIR}:$PYTHONPATH

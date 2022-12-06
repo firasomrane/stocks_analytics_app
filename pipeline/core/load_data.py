@@ -1,4 +1,3 @@
-
 from typing import List
 
 import pandas as pd
@@ -9,10 +8,8 @@ from pipeline.core.populator import CsvFilePopulator, PandasDfPopulator
 from pipeline.tables.stock import stock_table_definition
 
 
-CSV_FILES = [
-    'stocks-2010.csv',
-    'stocks-2011.csv'
-]
+CSV_FILES = ['stocks-2010.csv', 'stocks-2011.csv']
+
 
 def get_pd_dataframe_with_dates_columns_formated(csv_files_l: List[str]) -> pd.DataFrame:
     dfs = []
@@ -27,7 +24,7 @@ def get_pd_dataframe_with_dates_columns_formated(csv_files_l: List[str]) -> pd.D
     return df_all
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     create_database_if_not_exists(STOCK_MARKET_DATA)
     db_engine = get_db_engine(STOCK_MARKET_DATA)
 

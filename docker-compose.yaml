@@ -41,7 +41,7 @@ services:
   #   # command: tail -F anything
   #   depends_on:
   #     - db
-  #   environment: 
+  #   environment:
   #     <<: *db_environment
 
 volumes:
