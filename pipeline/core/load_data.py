@@ -1,5 +1,6 @@
 import os
 from typing import List
+import logging
 
 import pandas as pd
 
@@ -7,6 +8,8 @@ from pipeline.core.constants import PIPELINE, STOCK_MARKET_DATA
 from pipeline.core.db_utils import create_database_if_not_exists, get_db_engine
 from pipeline.core.populator import CsvFilePopulator, PandasDfPopulator
 from pipeline.tables.stock import stock_table_definition
+
+logger = logging.getLogger(__name__)
 
 
 CSV_FILES = ['stocks-2010.csv', 'stocks-2011.csv']
@@ -38,3 +41,5 @@ if __name__ == '__main__':
         pandas_df=df,
     )
     populator.populate()
+
+    logger.info('data is uploaded to the DB')
