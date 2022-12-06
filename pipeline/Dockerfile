@@ -1,22 +1,23 @@
-FROM python:3.9.15-alpine3.16
+FROM python:3.9.4
 
 ENV PIPELINE_DIR /usr/src/app
 
-RUN python -m pip install --upgrade pip==20.2 setuptools==57.5.0
-
-RUN apk add --no-cache --update \
-    python3 python3-dev gcc \
-    gfortran musl-dev
+# https://stackoverflow.com/a/57764857/7275926
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-dev \
+    gcc \
+    gfortran \
+    musl-dev \
+    libpq-dev
 
 RUN mkdir $PIPELINE_DIR
 WORKDIR $PIPELINE_DIR
 ENV PYTHONPATH ${PIPELINE_DIR}:$PYTHONPATH
 
-RUN apk add --no-cache gcc musl-dev linux-headers
-RUN apk add libpq-dev
-RUN python -m pip install --upgrade pip==21.3.1
+RUN python -m pip install --upgrade pip==20.2 setuptools==57.5.0
+
 COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 COPY . ./pipeline
 
 CMD ["python", "./pipeline/core/load_data.py"]

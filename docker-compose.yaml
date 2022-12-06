@@ -24,7 +24,6 @@ services:
       - "15432:5432"
 
   pipeline:
-    platform: linux/amd64
     build: ./pipeline
     command: tail -F anything
     depends_on:

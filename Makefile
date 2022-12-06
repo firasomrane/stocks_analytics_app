@@ -1,3 +1,4 @@
+
 run_pipeline:
-	DOCKER_BUILDKIT=0 docker-compose build pipeline
-	DOCKER_BUILDKIT=0 docker-compose run -d pipeline
+	COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build pipeline
+	COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose run -d pipeline
