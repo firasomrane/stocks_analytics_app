@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Table, Column, Integer, Date, Float, Index, MetaData, Text
+from sqlalchemy import Column, Date, Float, Index, Integer, MetaData, Table, Text
 
 from pipeline.tables.table_definition import TableDefinition
 
@@ -28,13 +28,15 @@ stock_table = Table(
 
 # This is automatically collected my the sqla metadata and will be created automatically if we
 # use table.create(engine)
+idx_name_date = 'idx_name_date'
 stock_table_indexes = [
     # TODO check if this is used since a unique index on primary key (name, date) is created also
-    Index('idx_name_date', stock_table.c.name, stock_table.c.date, postgresql_using='btree')
+    Index(idx_name_date, stock_table.c.name, stock_table.c.date, postgresql_using='btree')
 ]
 
 
 stock_table_definition = TableDefinition(
     table=stock_table,
     indexes_list=stock_table_indexes,
+    post_copy_sql=f'CLUSTER {stock_table.name} USING {idx_name_date}',
 )

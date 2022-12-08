@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import List
@@ -8,6 +9,8 @@ from sqlalchemy.orm import Session
 
 from apis.schemas import StockMetric
 from models.stock import Stock
+
+logger = logging.getLogger(__name__)
 
 
 class Metric(Enum):
@@ -47,6 +50,13 @@ def get_agg_from_rolling_df(
 ISO_DATE_FORMAT = '%Y-%m-%d'
 
 
+def get_date_timedelta(rolling_window: int) -> int:
+    if rolling_window < 5:
+        return 7 * rolling_window
+    else:
+        return 3 * rolling_window
+
+
 def get_stock_metric(
     db_session: Session,
     ticker: str,
@@ -56,9 +66,12 @@ def get_stock_metric(
     metric: Metric,
     rolling_window: int,
 ) -> List[StockMetric]:
-    updated_start = (datetime.strptime(start, ISO_DATE_FORMAT).date() - timedelta(days=rolling_window)).strftime(
+
+    days_timedelta = get_date_timedelta(rolling_window=rolling_window)
+    updated_start = (datetime.strptime(start, ISO_DATE_FORMAT).date() - timedelta(days=days_timedelta)).strftime(
         ISO_DATE_FORMAT
     )
+
     query = (
         db_session.query(Stock)
         .filter(Stock.name == ticker)
@@ -70,7 +83,11 @@ def get_stock_metric(
 
     df['metric'] = get_agg_from_rolling_df(df[price_column].rolling(rolling_window), metric)
     df = df.fillna('')
-    print(df[['date', 'metric']].head(100))
+    # Keep only the desired data
+    df = df[df['date'] >= datetime.strptime(start, ISO_DATE_FORMAT).date()]
+    logger.info(f'Final output length is {len(df)}')
+
+    # print(df[['date', 'metric']].head(100))
 
     # return [StockMetric(date=item[0], metric=item[1]) for item in df[['date', 'metric']].values.tolist()]  # noqa
 
