@@ -1,2 +1,4 @@
 data/*
 pipeline/data/*
+*__pycache__*
+*.pyc

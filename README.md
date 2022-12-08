@@ -88,17 +88,30 @@ If we start receiving thousands of requests per second then 1 instance should br
 - Use async dB calls and async api functions to have concurrency and not wait for dB calls while returned. This should be out of the box in FasApi.
 
 - If we start hitting the max CPU usage of the database instance due to the large number of connections and the required queries overhead then we can scale use `DB replication` and have 1 primary instance for writing and multiple replicas read-only DB instances that we can load-balance the traffic between. \
-This introduces
+This introduces some trandoffs between `availability` and `strong consistency of read after write` . These are the different postgres replication modes:
+  - Asynchronous Replication => no strong consistency of read after write
+  - Synchronous Write Replication
+  - Synchronous Apply Replication => Need that all replicas have written => Slower writes
 
 
 5 - If it had to serve queries over larger datasets — when would it start to break and how would you scale past that point?
 
-- If we serve the queries over large datasets then the
+- If we serve the queries over large datasets then we can hit storage scaling problems where we can no more scale vertically our database instance, or we can start having slower queries due to the large search space and reduced DB cache compared to the size of the table and the indexes => We need to read from disk more often.
 
-- We can use partitioning if
+- Stock market data is a `time-series` data and queries are always based on the time. If we had a stock market data with billions of data points, then using a time-series database like will be a better fit since it optimizes for the time-based queries./
+Databases like TimeScaleDB and InfluxDB can be considered.
+
+- We can use DB `partitioning` which will split the table into smaller phisical pieces and if the partitions are matching the queries (partitioning columns are used for filtering) then the queries search space will decrease and make the queries faster. /
+We can paritition based on ticker name and dates, Hash Partitioning on names and Range parititioning on dates. This is supported out of the box for [Postgres](https://www.postgresql.org/docs/14/ddl-partitioning.html). /
+This introduces some overhead if we end up with large number of partitions.
+
+- Another option is `Database Sharding`. Stock ticker is a good choice for sharding key, where we can use `hashed sharding` since we can consider that each stock ticker have the same amount of data (with exceptions depending on the date the stock started trading), then distributing them randomly `won't create data skew problems` with some shards being bigger then other ones.\
+We can use `Consistent hashing` For a better fault tolerant solution, but generally the database will be hosted in the cloud provider's service where it offers `high availability` and shards can be restored fast if some problems occured.\
+Sharding can introduces problems if we have joins between different tables that can't be sharded by the same key, which introduces the complexity of performing multi-shards(distributed) transactions.
 
 6 - Additional notes on implementation:
-How to develop APIs
+
+-
 
 ### Input validation
 For the validation I relied mostly on FastAPI already built in tools for easier HTTP exceptions handling.

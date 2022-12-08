@@ -51,7 +51,7 @@ ISO_DATE_FORMAT = '%Y-%m-%d'
 
 
 def get_date_timedelta(rolling_window: int) -> int:
-    if rolling_window < 5:
+    if rolling_window <= 5:
         return 7 * rolling_window
     else:
         return 3 * rolling_window
