@@ -24,8 +24,9 @@ services:
       - "15432:5432"
 
   pipeline:
+    container_name: pipeline
     build: ./pipeline
-    command: tail -F anything
+    # command: tail -F anything
     depends_on:
       - db
     environment: &db_environment
@@ -35,13 +36,16 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       DB_NAME: ${POSTGRES_DB_NAME:-postgres}
 
-  # api:
-  #   build: ./api
-  #   # command: tail -F anything
-  #   depends_on:
-  #     - db
-  #   environment:
-  #     <<: *db_environment
+  api:
+    container_name: api
+    build: ./api
+    # command: tail -F anything
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *db_environment
 
 volumes:
   db-volume:

@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Table, Column, Integer, Date, Float, Enum, Index, MetaData, Text
+from sqlalchemy import Table, Column, Integer, Date, Float, Index, MetaData, Text
 
 from pipeline.tables.table_definition import TableDefinition
 
@@ -26,8 +26,11 @@ stock_table = Table(
     Column('market', Text),
 )
 
+# This is automatically collected my the sqla metadata and will be created automatically if we
+# use table.create(engine)
 stock_table_indexes = [
-    # Index()
+    # TODO check if this is used since a unique index on primary key (name, date) is created also
+    Index('idx_name_date', stock_table.c.name, stock_table.c.date, postgresql_using='btree')
 ]
 
 

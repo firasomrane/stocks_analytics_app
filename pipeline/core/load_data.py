@@ -3,10 +3,11 @@ from typing import List
 import logging
 
 import pandas as pd
+from sqlalchemy.types import Date
 
 from pipeline.core.constants import PIPELINE, STOCK_MARKET_DATA
 from pipeline.core.db_utils import create_database_if_not_exists, get_db_engine
-from pipeline.core.populator import CsvFilePopulator, PandasDfPopulator
+from pipeline.core.populator import PandasDfPopulator
 from pipeline.tables.stock import stock_table_definition
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ def get_pd_dataframe_with_dates_columns_formated(csv_files_l: List[str]) -> pd.D
         dfs.append(df)
 
     df_all = pd.concat(dfs, axis=0, ignore_index=True)
-    df_all['date'] = pd.to_datetime(df['date'])
+    df_all['date'] = pd.to_datetime(df_all['date'])
     df_all['date'] = df_all['date'].dt.strftime('%Y-%m-%d')
     return df_all
 
@@ -35,10 +36,12 @@ if __name__ == '__main__':
     db_engine = get_db_engine(STOCK_MARKET_DATA)
 
     df = get_pd_dataframe_with_dates_columns_formated(csv_files_l=CSV_FILES)
+
     populator = PandasDfPopulator(
         table_definition=stock_table_definition,
         db_engine=db_engine,
         pandas_df=df,
+        columns_dtype={'date': Date()},  # noqa
     )
     populator.populate()
 

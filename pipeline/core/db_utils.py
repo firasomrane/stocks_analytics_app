@@ -56,7 +56,6 @@ def get_db_engine(db_name: str):
 
 def get_db_conn(db_name: str):
     print('getting db_config: ')
-    print(f'{get_db_config(db_name).psycopg2_compatible_dict = }')
     conn = psycopg2.connect(**get_db_config(db_name).psycopg2_compatible_dict)
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     return conn
@@ -100,7 +99,6 @@ def copy_csv_to_table(
 
     # Close the cursor and connection
     cur.close()
-
     conn.set_isolation_level(isolation_level)
     conn.close()
 
@@ -110,15 +108,22 @@ def copy_pandas_df_to_table(
     table_name: str,
     db_engine: Engine,
 ):
-    pandas_df.head(0).to_sql(
-        table_name, db_engine, if_exists='replace', index=False
-    )  # drops old table and creates new empty table
+    """
+    Use SQL COPY to upload a pandas dataframe to a postgres db table,
+    ref: https://stackoverflow.com/a/47984180/7275926
+
+    Args:
+        - pandas_df: pd.DataFrame, dataframe to upload
+    """
 
     conn = db_engine.raw_connection()
     cur = conn.cursor()
     output = io.StringIO()
-    pandas_df.to_csv(output, sep='\t', header=False, index=False)
+    pandas_df.to_csv(output, sep=',', header=False, index=False)
     output.seek(0)
     # _ = output.getvalue()
-    cur.copy_from(output, table_name, null='')  # null values become ''
+    cur.copy_from(output, table_name, null='', sep=',')  # null values become ''
     conn.commit()
+
+    cur.close()
+    conn.close()

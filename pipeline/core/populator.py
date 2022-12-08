@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import os
-from typing import List, Tuple, Union
+from typing import Any, Dict, List, Union
 
 from sqlalchemy.sql.expression import Executable
 from sqlalchemy.engine import Engine
@@ -68,7 +68,7 @@ class BasePostgresTablePopulator(ABC):
             self.drop_table()
         self.create_table()
         self.upload_data()
-        self.create_indexes()
+        # self.create_indexes()
         self.execute_additional_sql()
         self.analyze()
 
@@ -110,6 +110,7 @@ class PandasDfPopulator(BasePostgresTablePopulator):
         self,
         table_definition: TableDefinition,
         pandas_df: pd.DataFrame,
+        columns_dtype: Dict[str, Any] = None,
         **kwargs,
     ) -> None:
         super().__init__(
@@ -117,11 +118,10 @@ class PandasDfPopulator(BasePostgresTablePopulator):
             **kwargs,
         )
         self.pandas_df = pandas_df
+        self.columns_dtype = columns_dtype
 
     def upload_data(self):
 
         copy_pandas_df_to_table(
-            pandas_df=self.pandas_df,
-            table_name=self.table_definition.table.name,
-            db_engine=self.db_engine,
+            pandas_df=self.pandas_df, table_name=self.table_definition.table.name, db_engine=self.db_engine  # noqa
         )
