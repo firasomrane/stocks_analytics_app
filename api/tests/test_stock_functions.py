@@ -1,4 +1,4 @@
-from api.apis.stock_functions import get_date_timedelta
+from apis.stock_functions import get_date_timedelta
 
 
 def test_get_date_timedelta():
