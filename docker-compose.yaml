@@ -23,7 +23,7 @@ services:
     ports:
       - "15432:5432"
 
-  pipeline:
+  pipeline: &pipeline
     container_name: pipeline
     build: ./pipeline
     # command: tail -F anything
@@ -36,7 +36,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       DB_NAME: ${POSTGRES_DB_NAME:-postgres}
 
-  api:
+  api: &api
     container_name: api
     build: ./api
     # command: tail -F anything
@@ -46,6 +46,19 @@ services:
       - "8000:8000"
     environment:
       <<: *db_environment
+
+  api-tests-base: &api-tests-base
+    <<: *api
+    container_name: api_tests
+    command: pytest -v
+
+  api-tests-ci:
+    <<: *api-tests-base
+
+  api-tests-local:
+    <<: *api-tests-base
+    volumes:
+      - ./api:/usr/src/app/
 
 volumes:
   db-volume:
