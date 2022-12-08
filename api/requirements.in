@@ -1,0 +1,6 @@
+
+fastapi[all]==0.70.0
+pydantic==1.7.4
+pandas==1.4.0
+psycopg2==2.9.4
+SQLAlchemy==1.4.3

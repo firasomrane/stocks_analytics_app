@@ -13,6 +13,14 @@ repos:
           --line-length=120
         ]
 
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        args: [
+          --settings-path=pyproject.toml
+        ]
+
   # Some out-of-the-box hooks for pre-commit
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1
@@ -84,7 +92,7 @@ repos:
       # Run flake8 on python files.
       - id: flake8
         args: [
-          --max-line-length=99,
+          --max-line-length=120,
           --max-complexity=18,
           --ignore=**/settings/*.py F401 F403 F405
         ]
