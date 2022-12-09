@@ -62,7 +62,7 @@ optimizations would you like to make?
 - To speed up the run-time when filtering and searching for the target rows based on the ticker and the start and end date, the data was put in a postgres table and added a b-tree index on (name, date) to speed up the search.
 - I have added postgres table [clustering](https://www.postgresql.org/docs/14/sql-cluster.html) based on the (name, date) index to make the table phisically reordered based on the index information which helps making less random file access in the DB disk and have maximum sequential access to disk which is faster.\
 This can be done with such query `CLUSTER stock USING idx_name_date`
-- Since the `rolling-window` is small there is no value in **`pre-aggregating`** the metrics that we can aggregate on top like `MAX` and `MIN`. \
+- Since the `rolling-window` is small there is no value in <span id="pre-aggregation"> **`pre-aggregating`**</span> the metrics that we can aggregate on top like `MAX` and `MIN`. \
 By pre-aggregation here we mean that:
   - we can pre-aggregate `MIN` and `MAX` for each group of 100 subsequent dates,
   - then to find the `MIN` for 910 dates we just need to aggregate on top of 9 of the pre-aggregated metrics + 10 non pre-aggregated metrics.
@@ -77,6 +77,7 @@ Both `pre-aggregation` and `caching` are used by BI tools for faster dashboardin
 
 4- If it had to serve many queries at once — when would it start to break and how
 would you scale past that point?
+<span id="many_queries"></span>
 
 Using 1 instance serving the API is already `not fault tolerant`, so when the machine that we use is down, the service will be down, => We need more than 1 instance serving the API.\
 If we start receiving thousands of requests per second then 1 instance should break and won't be able to handle that amount of concurrent requests. This will depend on the machine config (CPU) used to run the service and on the cpu resources used by each request. Some load-testing is necessary to have a better idea on the numbers.
@@ -121,7 +122,25 @@ Use the FastAPI's `Query` to validate the api endpoint query parameters, which w
 
 ## Feature Expansion Discussion: Most Similar Stock
 
+- To find the most similar stock based on the computed rolling window metric time series, the basic way is to perform the metric calculation for all stocks and then choose the max based on the similarity measure by some function that implements a way of calculating similarity between time series.
+
+- A basic implemetation of a function to calculate similarity or (-distance) between 2 times series can be based on [`Pearson correlation`](https://en.wikipedia.org/wiki/Pearson_correlation_coefficient), which compares the patterns of fluctuation of the time serie and not the values.
+
+- Here obviously we can't have a pre-built index that we can query and give us the closest time-series, mainly because we can't pre-calculate the metrics for all the stocks for all rolling-window possible numbers.
+
+- To solve the problem of re-calculating the the entire metric based on the rolling window we can use `pre-aggreation` and caching as described [here](#pre-aggregation). This will allow to have the metric time-series of each.
+
+- One property of the problem at hand is that it can be `performed in parallel`. Once the target stock metric time series is calculated, both calculating the metric time series and the similarity to the target stock's one can be done for each stock in parallel. At the end we need to `aggregate` the results and return the max value.\
+If we use `spark` such aggregation can be done easily in the driver.
+
+- We can distribute the work with technologies like `spark` or `dask`. We can also leverage An event based architecture where we create an event for each stock in a queue (AMAZON SQS or Tasks queue on GCP) and cloud functions (or cloud run) that will be triggered based on the queue content to calculate the metric and then the similarity and send the result to an aggregation service that can be a simple web app that caculates the maximum similarity on the fly based on the incoming post requests.\
+The end choice of the technology will depend on the costs of different cloud infrastructure parts and the size of the data at hand.
+
+- We can hit some bottelneck in terms of the number of connections to the DB, but we can use the techniques described [above](#many_queries) to serve many queries at once like connection pools and replication for the DB and horizontal scaling for the web app.
+
+- This scheme illustrates the idea of distributing the calculation.
+<img src="./docs/images/parallel_similarity.svg">
 
 ## Next steps:
 - Add test coverage for the API and better input validation with more detailed error messages.
-- Add Continuous integration (CI) with Github actions to run all tests.
+- Add Continuous integration (CI) with Github actions to run all unit tests at each commit.
