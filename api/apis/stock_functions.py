@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 from sqlalchemy.orm import Session
@@ -138,6 +138,13 @@ def validate_query_parameters(start: str, end: str, price_column: str, metric: M
             raise validation.http_exception
 
 
+def format_to_float(input: str) -> Optional[float]:
+    try:
+        return round(float(input), 2)
+    except ValueError:
+        return None
+
+
 def get_stock_metric(
     db_session: Session,
     ticker: str,
@@ -159,13 +166,17 @@ def get_stock_metric(
     query = db_session.query(Stock).filter(Stock.name == ticker).filter(Stock.date <= end).order_by(Stock.date.asc())
 
     df = pd.read_sql(query.statement, db_session.bind)
+    print(f'{len(df)  = }')
 
     df['metric'] = get_agg_from_rolling_df(df[price_column].rolling(rolling_window), metric)
     df = df.fillna('')
+
+    print(f'afer filling na {len(df)  = }')
     # Keep only the desired data
     df = df[df['date'] >= datetime.strptime(start, ISO_DATE_FORMAT).date()]
     logger.info(f'Final output length is {len(df)}')
 
-    df['metric'] = df['metric'].apply(lambda x: format(float(x), '.2f')).astype(float)
-
-    return df[['date', 'metric']].values.tolist()
+    print(df.head())
+    df['metric'] = df['metric'].apply(format_to_float)
+    df = df.fillna('')
+    return df[['date', 'metric']].to_dict('records')

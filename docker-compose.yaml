@@ -16,6 +16,7 @@ services:
 
   # NOTE: Test DB doesn't require a persistent volume, since the data isn't supposed and should'nt be persisted
   test-db:
+    container_name: test-db
     image: postgres:14.1-alpine
     environment:
       <<: *db_env
@@ -49,8 +50,16 @@ services:
 
   api-tests-base: &api-tests-base
     <<: *api
+    environment:
+      POSTGRES_HOST: test-db
+      # POSTGRES_PORT: 15432
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: ${POSTGRES_DB_NAME:-postgres}
     depends_on:
       - test-db
+    links:
+      - test-db:test-db
     container_name: api_tests
     command: pytest -v
 
