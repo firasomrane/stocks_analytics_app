@@ -4,10 +4,9 @@ from enum import Enum
 from typing import List, Optional
 
 import pandas as pd
-from sqlalchemy.orm import Session
-
 from apis.schemas import StockMetric
 from models.stock import Stock
+from sqlalchemy.orm import Session
 from validation.validation import Validation
 
 logger = logging.getLogger(__name__)

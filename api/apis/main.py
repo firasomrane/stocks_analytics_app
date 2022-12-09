@@ -1,10 +1,9 @@
-from fastapi import Depends, FastAPI, Query
-from pydantic import Required
-from sqlalchemy.orm import Session
-
 from apis.dependencies import get_db_session
 from apis.schemas import StockMetric
 from apis.stock_functions import get_stock_metric
+from fastapi import Depends, FastAPI, Query
+from pydantic import Required
+from sqlalchemy.orm import Session
 
 app = FastAPI(title='API for stock metrics', version='1-0-0')
 

@@ -1,17 +1,19 @@
+# isort: skip_file
 import unittest
 from dataclasses import dataclass
 from typing import Any, List
 
 import pytest
+from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from tests.test_input import TEST_INPUT
 
 from apis.dependencies import get_db_session
 from apis.main import app
 from database.utils import create_database_if_not_exists, create_table, drop_table, get_db_config
 from models.stock import Stock
+from tests.test_input import TEST_INPUT  # isort:skip
+
 
 TC = unittest.TestCase()
 

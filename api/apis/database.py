@@ -1,8 +1,7 @@
+from database.utils import get_db_config
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
-from database.utils import get_db_config
 
 STOCK_MARKET_DATA = 'stock_market_data'
 

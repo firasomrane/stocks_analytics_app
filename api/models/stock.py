@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Date, Float, Integer, Text
-
 from apis.database import Base
+from sqlalchemy import Column, Date, Float, Integer, Text
 
 
 class Stock(Base):
