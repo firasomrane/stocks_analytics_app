@@ -1,6 +1,6 @@
+import logging
 import os
 from typing import List
-import logging
 
 import pandas as pd
 from sqlalchemy.types import Date

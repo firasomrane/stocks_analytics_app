@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from sqlalchemy import Table, Index
+from sqlalchemy import Index, Table
 
 
 @dataclass

@@ -1,14 +1,14 @@
-from abc import ABC, abstractmethod
 import os
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Union
 
-from sqlalchemy.sql.expression import Executable
-from sqlalchemy.engine import Engine
 import pandas as pd
+from sqlalchemy.engine import Engine
+from sqlalchemy.sql.expression import Executable
 
+from pipeline.core.constants import PIPELINE, STOCK_MARKET_DATA
 from pipeline.core.db_utils import copy_csv_to_table, copy_pandas_df_to_table, get_db_conn
 from pipeline.tables.table_definition import TableDefinition
-from pipeline.core.constants import PIPELINE, STOCK_MARKET_DATA
 
 
 class BasePostgresTablePopulator(ABC):

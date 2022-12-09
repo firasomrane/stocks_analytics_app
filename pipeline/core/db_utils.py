@@ -1,15 +1,14 @@
-from dataclasses import dataclass
-import os
 import io
-from typing import Dict
 import logging
+import os
+from dataclasses import dataclass
+from typing import Dict
 
 import pandas as pd
 import psycopg2
-from sqlalchemy.engine import Engine
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from sqlalchemy import create_engine
-
+from sqlalchemy.engine import Engine
 
 logger = logging.getLogger(__name__)
 
