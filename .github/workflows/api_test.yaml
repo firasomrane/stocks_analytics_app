@@ -18,7 +18,7 @@ jobs:
       - name: Debug containers
         run: 	docker ps
       - name: Run tests
-        run: 	COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose run -d api-tests-ci
+        run: 	COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose run api-tests-ci
       - name: Debug
         run: docker ps
       - name: Shutdown
