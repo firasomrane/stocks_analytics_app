@@ -4,7 +4,7 @@ services:
   db:
     container_name: db
     image: postgres:14.1-alpine
-    environment:
+    environment: &db_env
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       PGDATA: /data/postgres
@@ -18,7 +18,7 @@ services:
   test-db:
     image: postgres:14.1-alpine
     environment:
-      - POSTGRES_DB=ph_tests
+      <<: *db_env
 
     ports:
       - "15432:5432"
@@ -49,6 +49,8 @@ services:
 
   api-tests-base: &api-tests-base
     <<: *api
+    depends_on:
+      - test-db
     container_name: api_tests
     command: pytest -v
 
