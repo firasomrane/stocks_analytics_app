@@ -74,6 +74,7 @@ services:
       - db
     links:
       - db:db
+    command: pytest -v
 
   api-tests-local:
     <<: *api-tests-base
