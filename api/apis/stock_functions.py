@@ -79,7 +79,7 @@ class MetricValidation(Validation):
 
 
 MAX_ROLLING_WINDOW = 100
-MIN_ROLLING_WINDOW = 10
+MIN_ROLLING_WINDOW = 1
 
 
 class RollingWindowValidation(Validation):

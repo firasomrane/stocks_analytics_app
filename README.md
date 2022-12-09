@@ -199,7 +199,7 @@ Use the FastAPI's `Query` to validate the api endpoint query parameters, which w
 
 - Here obviously we can't have a pre-built index that we can query and give us the closest time-series, mainly because we can't pre-calculate the metrics for all the stocks for all rolling-window possible numbers.\
 First because this data is not meant to be static, but rather updated with new stock market numbers for each open market day.\
-The second reason is because of the large number of time-series we should calculate: we need it for each stock (we have `3561` in our data and for each metric (5) and for each possible rolling-window (between 10 and 100 -> 91) and for each possible date(`504`) in our dataset => This results in `3561 * 5 * 504 * 91 = > 800M` unique metric to compute.\
+The second reason is because of the large number of time-series we should calculate: we need it for each stock (we have `3561` in our data and for each metric (5) and for each possible rolling-window (between 1 and 100 -> 91) and for each possible date(`504`) in our dataset => This results in `3561 * 5 * 504 * 100 = ~ 900M` unique metric to compute.\
 The third reason is that it will be very complex to maintain an index on time series because we need first to create all possible time-series with all possible lengths (date ranges: 504) and maintain each in a separate index (we can use faiss for similarity search vectors indexes with custom similarity function)
 
 - To solve the problem of re-calculating the the entire metric based on the rolling window we can use `pre-aggreation` and caching as described [here](#pre-aggregation). This will allow to have the metric time-series of each.
