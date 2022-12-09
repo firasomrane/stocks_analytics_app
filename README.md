@@ -137,7 +137,9 @@ By pre-aggregation here we mean that:
 
   This will introduce complexity, this can be beneficial only on big amount of data, for example in the case where we have the stock market data for each minute and for a extended number of years.
 
-- Another Techinique to consider is caching. By having another layer where the API will do the look-up before querying the database.
+- I use sql `COPY` for faster data population to the DB table.
+
+- Another thing to consider is caching. By having another layer where the API will do the look-up before querying the database.
 
 **Remark**:\
 Both `pre-aggregation` and `caching` are used by BI tools for faster dashboarding and fast calculation of aggregations. This layer is generally called a cube (eg: [cube.dev](https://cube.dev/)). They can be used with postgres database in our case.
