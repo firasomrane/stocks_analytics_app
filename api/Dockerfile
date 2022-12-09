@@ -7,6 +7,7 @@ ENV APP_DIR /usr/src/app
 
 RUN mkdir $APP_DIR
 WORKDIR $APP_DIR
+ENV PYTHONPATH=$APP_DIR
 
 # TODO add a user to not run this as a root
 
