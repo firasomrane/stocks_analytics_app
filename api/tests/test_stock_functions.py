@@ -14,4 +14,4 @@ def test_metric_validation():
 
     assert MetricValidation('median').is_valid
 
-    assert StartDateValidation('anything').is_valid == False  # noqa
+    assert MetricValidation('anything').is_valid == False  # noqa
