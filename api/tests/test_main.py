@@ -189,10 +189,5 @@ def test_read_main(populate_db_test):
             end=test_case.end,
         )
         response = client.get(path)
-        print(f'{path = }')
-        print(f'{test_case.metric}')
-        print(f'{response.status_code = }')
-        print(f'{response.json() = }')
-        print(f'{test_case.expected_result = }')
         assert response.status_code == test_case.expected_status_code
         assert response.json() == test_case.expected_result
