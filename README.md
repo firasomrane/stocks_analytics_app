@@ -179,6 +179,11 @@ We can use `Consistent hashing` For a better fault tolerant solution, but genera
 Sharding can introduce problems if we have joins between different tables that can't be sharded by the same key, which introduces the complexity of performing multi-shards(distributed) transactions.
 
 ### 6 - Additional notes on implementation:
+- Here the implementation of the API is very basic and not robust. This to consider are:
+  - Rate limiting
+  - Circuit breaker
+  - Timeouts (for DB queries)
+  - Retries and banckoff with DB queries.
 
 ### Input validation
 For the validation I relied mostly on FastAPI already built in tools for easier HTTP exceptions handling.
@@ -203,7 +208,7 @@ The third reason is that it will be very complex to maintain an index on time se
   - `map` is calculating similarity for each stock to our target stock.
   - `Reduce` is calculating the most similar => the min
 
-- We can distribute the work with technologies like `spark` or `dask`. \
+- We can distribute the work with distributed computation technologies like `spark` or `dask`. These make it easy for the `reduce` part since it is supported out of the box (for spark the result will be reduced in the driver)\
 We can also leverage An event based architecture where we create an event for each stock in a `queue` (AMAZON SQS or Tasks queue on GCP) and `cloud functions` (or cloud run) that will be `triggered based on the queue content` to calculate the metric and then the similarity and send the result to an aggregation service that can be a simple web app that caculates the maximum similarity on the fly based on the incoming post requests.\
 The end choice of the technology will depend on the costs of different cloud infrastructure parts and the size of the data at hand.
 
