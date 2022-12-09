@@ -1,0 +1,9 @@
+name: tests
+on: push
+jobs:
+  pre-commit-hooks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: pre-commit/action@v3.0.0
