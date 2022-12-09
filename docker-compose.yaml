@@ -24,16 +24,6 @@ services:
     ports:
       - "15432:5432"
 
-  db2:
-    container_name: db
-    image: postgres:14.1-alpine
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      PGDATA: /data/postgres
-    ports:
-      - "5432:5432"
-
   pipeline: &pipeline
     container_name: pipeline
     build: ./pipeline
@@ -74,17 +64,10 @@ services:
     command: pytest -v
 
   api-tests-ci:
-    build: ./api
+    <<: *api-tests-base
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-    depends_on:
-      - db2
-    links:
-      - db2:db
-    command: pytest -v
+      <<: *db_test_environment
+      POSTGRES_PORT: ${POSTGRES_PORT:-15432}
 
   api-tests-local:
     <<: *api-tests-base
