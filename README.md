@@ -77,7 +77,7 @@ Tests can be run with `make run_api_tests_local` and then `docker exec -it [cont
 I have added tests for these validations.
 - I relied also on FastAPI built in parameters validation tools like `Query(default=Required, min_length=1, max_length=5)` for `ticker` parameters.
 - For each invalid input a HTTPError with status code 422 is returned with message detailing the problem:\
-Example visiting `http://0.0.0.0:8000/stock_metrics/?ticker=AAPL&start=2010-04-01&end=2010-11-01&price_column=any_name&metric=max&rolling_window=11` \
+Example visiting [this link](http://0.0.0.0:8000/stock_metrics/?ticker=AAPL&start=2010-04-01&end=2010-11-01&price_column=any_name&metric=max&rolling_window=11) \
 returns a http error with `{"detail":"Price column should be one of ['high_price', 'low_price', 'open_price', 'close_price']"}` as message
 
 ### 3- What optimizations did you make to speed up run-time? What additional optimizations would you like to make?
