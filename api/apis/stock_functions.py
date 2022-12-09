@@ -1,16 +1,20 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import List
 
 import pandas as pd
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from apis.schemas import StockMetric
 from models.stock import Stock
+from validation.validation import Validation
 
 logger = logging.getLogger(__name__)
+
+
+ISO_DATE_FORMAT = '%Y-%m-%d'
+START_DATE = '2010-01-04'
 
 
 class Metric(Enum):
@@ -29,11 +33,6 @@ def get_agg_from_rolling_df(
     rolling_df: pd.core.window.rolling.Rolling,
     metric: Metric,
 ) -> pd.core.series.Series:
-    if metric not in Metric.keys():
-        raise HTTPException(
-            status_code=400,
-            detail=f'The metric {metric} is not supported, please choose one from {Metric.keys()} ',  # noqa
-        )
 
     if metric == Metric.MEDIAN.value:
         return rolling_df.median()
@@ -47,14 +46,96 @@ def get_agg_from_rolling_df(
         return rolling_df.std()
 
 
-ISO_DATE_FORMAT = '%Y-%m-%d'
+class StartDateValidation(Validation):
+    def __init__(self, start_date: str) -> None:
+        super().__init__()
+        self.start_date = start_date
+
+    @property
+    def is_valid(self) -> bool:
+        return self.start_date >= START_DATE
+
+    @property
+    def error_message(self) -> str:
+        return f'Start should be bigger or equal to {START_DATE}'
 
 
-def get_date_timedelta(rolling_window: int) -> int:
-    if rolling_window <= 5:
-        return 7 * rolling_window
-    else:
-        return 3 * rolling_window
+class MetricValidation(Validation):
+    def __init__(self, metric: str) -> None:
+        super().__init__()
+        self.metric = metric
+
+    @property
+    def is_valid(self) -> bool:
+        return self.metric in Metric.keys()
+
+    @property
+    def error_message(self) -> str:
+        return f'The metric {self.metric} is not supported, please choose one from {Metric.keys()}'
+
+
+MAX_ROLLING_WINDOW = 100
+MIN_ROLLING_WINDOW = 10
+
+
+class RollingWindowValidation(Validation):
+    def __init__(self, rolling_window: int) -> None:
+        super().__init__()
+        self.rolling_window = rolling_window
+
+    @property
+    def is_valid(self) -> bool:
+        return MIN_ROLLING_WINDOW <= self.rolling_window <= MAX_ROLLING_WINDOW
+
+    @property
+    def error_message(self) -> str:
+        return f'rolling window should be between {MIN_ROLLING_WINDOW} and {MAX_ROLLING_WINDOW}'
+
+
+class EndBiggerThanStartValidation(Validation):
+    def __init__(self, start: str, end: str) -> None:
+        super().__init__()
+        self.start = start
+        self.end = end
+
+    @property
+    def is_valid(self) -> bool:
+        return self.start <= self.end
+
+    @property
+    def error_message(self) -> str:
+        return 'Start date should be smaller or equal to end date'
+
+
+class PriceColumnValidation(Validation):
+    valid_price_column_values = ['high_price', 'low_price', 'open_price', 'close_price']
+
+    def __init__(self, price_column: str) -> None:
+        super().__init__()
+        self.price_column = price_column
+
+    @property
+    def is_valid(self) -> bool:
+        return self.price_column in self.valid_price_column_values
+
+    @property
+    def error_message(self) -> str:
+        return f'Price column should be one of {self.valid_price_column_values}'
+
+
+def validate_query_parameters(start: str, end: str, price_column: str, metric: Metric, rolling_window: int):
+
+    validations = [
+        StartDateValidation(start),
+        MetricValidation(metric),
+        RollingWindowValidation(rolling_window),
+        EndBiggerThanStartValidation(start, end),
+        PriceColumnValidation(price_column),
+    ]
+
+    for validation in validations:
+        if not validation.is_valid:
+            raise validation.http_exception
 
 
 def get_stock_metric(
@@ -67,17 +148,15 @@ def get_stock_metric(
     rolling_window: int,
 ) -> List[StockMetric]:
 
-    days_timedelta = get_date_timedelta(rolling_window=rolling_window)
-    updated_start = (datetime.strptime(start, ISO_DATE_FORMAT).date() - timedelta(days=days_timedelta)).strftime(
-        ISO_DATE_FORMAT
+    validate_query_parameters(
+        start=start,
+        end=end,
+        price_column=price_column,
+        metric=metric,
+        rolling_window=rolling_window,
     )
 
-    query = (
-        db_session.query(Stock)
-        .filter(Stock.name == ticker)
-        .filter(Stock.date >= updated_start)
-        .filter(Stock.date <= end)
-    )
+    query = db_session.query(Stock).filter(Stock.name == ticker).filter(Stock.date <= end).order_by(Stock.date.asc())
 
     df = pd.read_sql(query.statement, db_session.bind)
 
@@ -87,12 +166,6 @@ def get_stock_metric(
     df = df[df['date'] >= datetime.strptime(start, ISO_DATE_FORMAT).date()]
     logger.info(f'Final output length is {len(df)}')
 
-    # print(df[['date', 'metric']].head(100))
-
-    # return [StockMetric(date=item[0], metric=item[1]) for item in df[['date', 'metric']].values.tolist()]  # noqa
-
-    # tmp_l = [item_d for item_d in df[['date', 'metric']].to_dict(orient='records')]
-
-    # return [StockMetric(**item_d) for item_d in df[['date', 'metric']].to_dict(orient='records')]
+    df['metric'] = df['metric'].apply(lambda x: format(float(x), '.2f')).astype(float)
 
     return df[['date', 'metric']].values.tolist()

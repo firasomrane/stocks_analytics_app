@@ -1,4 +1,6 @@
-data/*
-pipeline/data/*
 *__pycache__*
 *.pyc
+.DS_Store
+
+./data/*
+./pipeline/data/*

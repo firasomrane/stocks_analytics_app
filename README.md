@@ -10,11 +10,13 @@ After installing prerequisites
 - docker-compose [link](https://docs.docker.com/compose/install/)
 - make: `brew install make` if you are using macos
 ## Steps
-- 1 Create an external volume for the database to persist the data
+- Clone the git repository
+- Download, unzip the data and place it in `./pipeline/data` direcotory as it is, so that we end up with 2 files: `./pipeline/data/stocks-2011.csv` and `./pipeline/data/stocks-2010.csv`. [First file link](https://syrup-challenge.s3.us-east-2.amazonaws.com/stocks-2010.csv.gz), [Second file link](https://syrup-challenge.s3.us-east-2.amazonaws.com/stocks-2011.csv.gz)
+- Create an external volume for the database to persist the data
 ```
 docker volume create db-volume
 ```
-- 2 Populate data to a DB table
+- Populate data to a DB table
 ```
 make run_pipeline
 ```
@@ -42,11 +44,24 @@ http://localhost:8000/stock_metrics/?ticker=GOOG&start=2010-10-10&end=2010-12-10
 To try different input values for `ticker`, `start` and `end` dates ... you can change the query parameters values in either the url or with curl.
 
 ## Technical choices
-The purpose of the app
+The purpose of the app is to compute a metric based on a rolling window between a start and an end date.\
+
+### Base idea
+- The base idea of implementing this in a web app would be to have a have app that will load the `dataset in memory at startup time in a pandas DataFrame`, and for each call will perform the filtering on the dataframe.
+- Here the choice of pandas is because of the support of rolling window aggregation calculation out of the box.
+- But a dataframe deosn't support indexes for fast queries or at least supports them but with some complexity and not simple to have multi-column index, that's why filtering on date and ticker won't be fast. But of course for our case ~1M this should work without problems.
+- Another problem is that if the dataset is bigger it will no more `fit in memory` and we will start having memory errors using pandas which needs to load the entire data in memory (which can be solved by sharding but adds a ton of complexity).
+
+### The chosen implementation
+- The choice of a separate database and not an in-memory one or pandas, is to avoid having memory errors and make sure data is persisted to disk.
+- The stock price data is a time-series data in nature, prefered to not go with a time-series database to reduce the complexity for the purpose of this test.
+- I have decided to not use Postgres query to compute the rolling window metrics since it is simpler with pandas.
+- I have chosen to expose an API over a cli tool that doesn't communicate with an API since this application makes sense as an API service more than a cli tool.
+
 
 ## Implementation Discussion
 
-1- If you didn’t implement tests, what kind of testing would you like to see for this
+### 1- If you didn’t implement tests, what kind of testing would you like to see for this
 
 Here we would like to test everything:
 - The populator, test with a test db that the populator is adding the data and creating the requested indexes.
@@ -54,14 +69,57 @@ Here we would like to test everything:
 - Test the API that is returning the correct answers the and raising the expected errors with the right status codes.
 
 
-2- How did you handle and validate user inputs?
+### 2- How did you handle and validate user inputs?
 - There is some input validation implemented and described [here](#input-validation) . But We can extend it by raising 40x Http Errors with good error messages.
 
-3- What optimizations did you make to speed up run-time? What additional
-optimizations would you like to make?
+### 3- What optimizations did you make to speed up run-time? What additional optimizations would you like to make?
+
+- For each request we need to compute the rolling window metric for each date between start and end date. One optimization is `to not compute the rolling window metric for all the datees` and then filter the requested ones, but instead filter only the needed dates .\
+ Since the data is not present for each contiguous date due to holidays or days on which to stock exchange can be close, then calculating starting from (start_date - rolling_window (days)) won't work and we need to take some more safety to consider the holidays and maybe missing data on some days.
+
+ But doing this data analysis. executing this query
+  ```
+  with with_dates_lag AS (
+    select
+      name,
+      date,
+      lag(date, 1) over(partition by name order by date asc) as lagging_date
+    from stock
+  ),
+  days_diff AS (
+    select
+      *
+      extract(day from date::timestamp - lagging_date::timestamp) as days_diff
+    from with_dates_lag
+    where lagging_date is not null
+  )
+
+  select * from days_diff
+  order by days_diff desc;
+  ```
+  |name |date      |lagging_date|days_diff|
+  |-----|----------|------------|---------|
+  |FIF  |2011-09-28|2010-02-18  |587      |
+  |EMO  |2011-06-10|2010-05-13  |393      |
+  |KOS  |2011-05-11|2010-05-24  |352      |
+  |FF   |2011-03-23|2010-05-11  |316      |
+  |PAR  |2011-01-03|2010-09-24  |101      |
+  |NMK-C|2010-12-03|2010-09-16  |78       |
+  |NAV-D|2011-06-01|2011-04-06  |56       |
+  |MTSL |2010-04-01|2010-02-11  |49       |
+  |NAV-D|2010-04-05|2010-02-16  |48       |
+
+
+  Shows that some stocks may diseapper for longer than `>580` days, which can be due to different reasons, whether the data is not present or that the company went private and then listed again, or it may even be delisted by the stock exchange if it doesn't correspond to the exchange conditions and rules.
+
+  We can do some conditions on only these ~50 outliers but it is not a reliable and scalable way to do things in the long term.
+  Due to this, I decided to not use this optimization and to always compute the rolling window metric starting from the first date we have in the dataset which translates to no filtering on `start_date`, But **continue to filter on the `end_date`** to avoid wated calculations.
+
+
 - To speed up the run-time when filtering and searching for the target rows based on the ticker and the start and end date, the data was put in a postgres table and added a b-tree index on (name, date) to speed up the search.
 - I have added postgres table [clustering](https://www.postgresql.org/docs/14/sql-cluster.html) based on the (name, date) index to make the table phisically reordered based on the index information which helps making less random file access in the DB disk and have maximum sequential access to disk which is faster.\
 This can be done with such query `CLUSTER stock USING idx_name_date`
+
 - Since the `rolling-window` is small there is no value in <span id="pre-aggregation"> **`pre-aggregating`**</span> the metrics that we can aggregate on top like `MAX` and `MIN`. \
 By pre-aggregation here we mean that:
   - we can pre-aggregate `MIN` and `MAX` for each group of 100 subsequent dates,
@@ -75,7 +133,7 @@ By pre-aggregation here we mean that:
 **Remark**:\
 Both `pre-aggregation` and `caching` are used by BI tools for faster dashboarding and fast calculation of aggregations. This layer is generally called a cube (eg: [cube.dev](https://cube.dev/))
 
-4- If it had to serve many queries at once — when would it start to break and how
+### 4- If it had to serve many queries at once — when would it start to break and how
 would you scale past that point?
 <span id="many_queries"></span>
 
@@ -95,7 +153,7 @@ This introduces some trandoffs between `availability` and `strong consistency of
   - Synchronous Apply Replication => Need that all replicas have written => Slower writes
 
 
-5 - If it had to serve queries over larger datasets — when would it start to break and how would you scale past that point?
+### 5 - If it had to serve queries over larger datasets — when would it start to break and how would you scale past that point?
 
 - If we serve the queries over large datasets then we can hit storage scaling problems where we can no more scale vertically our database instance, or we can start having slower queries due to the large search space and reduced DB cache compared to the size of the table and the indexes => We need to read from disk more often.
 
@@ -110,9 +168,9 @@ This introduces some overhead if we end up with large number of partitions.
 We can use `Consistent hashing` For a better fault tolerant solution, but generally the database will be hosted in the cloud provider's service where it offers `high availability` and shards can be restored fast if some problems occured.\
 Sharding can introduces problems if we have joins between different tables that can't be sharded by the same key, which introduces the complexity of performing multi-shards(distributed) transactions.
 
-6 - Additional notes on implementation:
+### 6 - Additional notes on implementation:
 
--
+- Since
 
 ### Input validation
 For the validation I relied mostly on FastAPI already built in tools for easier HTTP exceptions handling.
@@ -126,7 +184,10 @@ Use the FastAPI's `Query` to validate the api endpoint query parameters, which w
 
 - A basic implemetation of a function to calculate similarity or (-distance) between 2 times series can be based on [`Pearson correlation`](https://en.wikipedia.org/wiki/Pearson_correlation_coefficient), which compares the patterns of fluctuation of the time serie and not the values.
 
-- Here obviously we can't have a pre-built index that we can query and give us the closest time-series, mainly because we can't pre-calculate the metrics for all the stocks for all rolling-window possible numbers.
+- Here obviously we can't have a pre-built index that we can query and give us the closest time-series, mainly because we can't pre-calculate the metrics for all the stocks for all rolling-window possible numbers.\
+First because this data is not meant to be static, but rather updated with new stock market numbers for each open market day.\
+The second reason is because of the large number of time-series we should calculate: we need it for each stock (we have `3561` in our data and for each metric (5) and for each possible rolling-window (between 10 and 100 -> 91) and for each possible date(`504`) in our dataset => This results in `3561 * 5 * 504 * 91 = > 800M` calculation to compute.\
+The third reason is that it will be very complex to maintain an index on time series because we need first to create all possible time-series with all possible length and maintain each in a separate index (we can use faiss for similarity search vectors indexes with custom similarity function)
 
 - To solve the problem of re-calculating the the entire metric based on the rolling window we can use `pre-aggreation` and caching as described [here](#pre-aggregation). This will allow to have the metric time-series of each.
 

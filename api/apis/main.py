@@ -21,12 +21,12 @@ def get_db():
 # TODO add response type as Pydantic class # , response_model=list[StockMetric]
 @app.get('/stock_metrics/')
 def read_stock_metric(
+    price_column: str,
+    metric: str,
+    rolling_window: int,
     ticker: str = Query(default=Required, min_length=1, max_length=5),
     start: str = Query(default=Required, regex=r'^(\d{4})-(\d{2})-(\d{2}?)', format='date'),
     end: str = Query(default=Required, regex=r'^(\d{4})-(\d{2})-(\d{2}?)', format='date'),
-    price_column: str = 'open_price',
-    metric: str = 'median',
-    rolling_window: int = 10,
     db_session: Session = Depends(get_db),
 ):
 
