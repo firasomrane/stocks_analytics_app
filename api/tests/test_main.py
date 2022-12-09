@@ -15,7 +15,6 @@ from models.stock import Stock
 
 TC = unittest.TestCase()
 
-
 create_database_if_not_exists('test')
 test_db_config_uri = get_db_config(db_name='test').uri
 print('test_db_config_uri: ', test_db_config_uri)
@@ -143,7 +142,7 @@ TEST_CASES = [
         ticker='AA',
         start='2010-01-01',
         end='2010-01-06',
-        expected_status_code=400,
+        expected_status_code=422,
         expected_result={'detail': 'Start should be bigger or equal to 2010-01-04'},
     ),
     TestCase(
@@ -153,7 +152,7 @@ TEST_CASES = [
         ticker='AA',
         start='2010-01-04',
         end='2010-01-06',
-        expected_status_code=400,
+        expected_status_code=422,
         expected_result={
             'detail': "The metric non_existing_metric is not supported, please choose one from ['median', 'mean', 'min', 'max', 'standard_deviation']"  # noqa
         },
@@ -165,7 +164,7 @@ TEST_CASES = [
         ticker='AA',
         start='2010-01-04',
         end='2010-01-06',
-        expected_status_code=400,
+        expected_status_code=422,
         expected_result={
             'detail': "Price column should be one of ['high_price', 'low_price', 'open_price', 'close_price']"
         },

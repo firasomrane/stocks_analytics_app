@@ -19,4 +19,4 @@ class Validation(ABC):
 
     @property
     def http_exception(self) -> HTTPException:
-        return HTTPException(status_code=400, detail=self.error_message)
+        return HTTPException(status_code=422, detail=self.error_message)
