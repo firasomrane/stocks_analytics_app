@@ -1,4 +1,4 @@
-name: test-api
+name: tests
 on: push
 jobs:
   api-tests:
@@ -8,6 +8,22 @@ jobs:
       - name: Create prerequisites
         run: docker volume create db-volume
       - name: Build test image
-        run: 	COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build api-tests-base
+        run: 	COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build api-tests-ci
       - name: Run tests
-        run: 	COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose run -d api-tests-base
+        run: 	COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose run api-tests-ci
+      - name: Shutdown
+        run: docker-compose down
+
+  pre-commit-hooks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: run pre-commit hooks
+        run: |
+          pip install pre-commit==2.18.1
+          pre-commit install
+          pre-commit run --all-files
