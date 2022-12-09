@@ -50,6 +50,7 @@ services:
 
   api-tests-base: &api-tests-base
     <<: *api
+    build: ./api
     environment: &db_test_environment
       POSTGRES_HOST: ${POSTGRES_HOST:-test-db}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -63,10 +64,12 @@ services:
     command: pytest -v
 
   api-tests-ci:
-    <<: *api-tests-base
+    build: ./api
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
     depends_on:
       - db
     links:
