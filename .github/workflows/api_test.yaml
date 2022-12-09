@@ -4,7 +4,7 @@ jobs:
   api-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Create prerequisites
         run: docker volume create db-volume
       - name: Build test image
@@ -19,13 +19,6 @@ jobs:
   pre-commit-hooks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: run pre-commit hooks
-        run: |
-          pip install pre-commit==2.20.0
-          pre-commit install
-          pre-commit run --all-files
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: pre-commit/action@v3.0.0
