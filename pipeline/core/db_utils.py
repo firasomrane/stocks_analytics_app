@@ -54,15 +54,16 @@ def get_db_engine(db_name: str):
 
 
 def get_db_conn(db_name: str):
-    print('getting db_config: ')
     conn = psycopg2.connect(**get_db_config(db_name).psycopg2_compatible_dict)
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     return conn
 
 
 def create_database_if_not_exists(db_name: str):
+    """
+    Creates postgres database if not exists
+    """
     conn = get_db_conn(db_name='postgres')
-    print(conn)
     logger.info(f' creating {db_name} database')
 
     with conn.cursor() as cur:

@@ -12,6 +12,10 @@ from pipeline.tables.table_definition import TableDefinition
 
 
 class BasePostgresTablePopulator(ABC):
+    """
+    Base class for Postgres table population
+    """
+
     def __init__(
         self,
         table_definition: TableDefinition,
@@ -74,6 +78,10 @@ class BasePostgresTablePopulator(ABC):
 
 
 class CsvFilePopulator(BasePostgresTablePopulator):
+    """
+    Populates csv files
+    """
+
     def __init__(
         self,
         table_definition: TableDefinition,
@@ -82,6 +90,13 @@ class CsvFilePopulator(BasePostgresTablePopulator):
         csv_separator: str = ',',
         **kwargs,
     ) -> None:
+        """
+        Args:
+            - table_definition: TableDefinition
+            - csv_file_names: List of csv filenames
+            - csv_files_dir_path: Dir where csv files exist, default is relative path data
+            - csv_separator: csv separator
+        """
         super().__init__(
             table_definition=table_definition,
             **kwargs,
@@ -106,6 +121,10 @@ class CsvFilePopulator(BasePostgresTablePopulator):
 
 
 class PandasDfPopulator(BasePostgresTablePopulator):
+    """
+    Fiven a pandas DataFrame populates it to a target table.
+    """
+
     def __init__(
         self,
         table_definition: TableDefinition,

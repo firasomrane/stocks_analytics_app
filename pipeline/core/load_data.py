@@ -17,6 +17,9 @@ CSV_FILES = ['stocks-2010.csv', 'stocks-2011.csv']
 
 
 def get_pd_dataframe_with_dates_columns_formated(csv_files_l: List[str]) -> pd.DataFrame:
+    """
+    Loads the csv files and format the date columns to ISO format
+    """
     dfs = []
 
     for filename in csv_files_l:

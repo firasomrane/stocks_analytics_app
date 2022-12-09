@@ -34,6 +34,10 @@ def get_agg_from_rolling_df(
     metric: Metric,
 ) -> pd.core.series.Series:
 
+    """
+    Given a rolling_df and a metric returns the appropriate metric computation
+    """
+
     if metric == Metric.MEDIAN.value:
         return rolling_df.median()
     elif metric == Metric.MEAN.value:
@@ -166,17 +170,14 @@ def get_stock_metric(
     query = db_session.query(Stock).filter(Stock.name == ticker).filter(Stock.date <= end).order_by(Stock.date.asc())
 
     df = pd.read_sql(query.statement, db_session.bind)
-    print(f'{len(df)  = }')
 
     df['metric'] = get_agg_from_rolling_df(df[price_column].rolling(rolling_window), metric)
     df = df.fillna('')
 
-    print(f'afer filling na {len(df)  = }')
     # Keep only the desired data
     df = df[df['date'] >= datetime.strptime(start, ISO_DATE_FORMAT).date()]
     logger.info(f'Final output length is {len(df)}')
 
-    print(df.head())
     df['metric'] = df['metric'].apply(format_to_float)
     df = df.fillna('')
     return df[['date', 'metric']].to_dict('records')

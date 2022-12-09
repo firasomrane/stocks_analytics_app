@@ -18,7 +18,6 @@ TC = unittest.TestCase()
 create_database_if_not_exists('test')
 test_db_config_uri = get_db_config(db_name='test').uri
 print('test_db_config_uri: ', test_db_config_uri)
-print(get_db_config(db_name='test'))
 
 test_db_engine = create_engine(test_db_config_uri)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_db_engine)
@@ -176,8 +175,6 @@ PATH = '/stock_metrics/?price_column={price_column}&metric={metric}&rolling_wind
 def test_read_main(populate_db_test):
 
     """"""
-    # df = pd.read_sql_query("select * from stock", con=db_engine)
-    # print(df.head(100))
 
     for test_case in TEST_CASES:
         path = PATH.format(
