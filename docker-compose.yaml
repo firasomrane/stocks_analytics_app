@@ -50,7 +50,7 @@ services:
 
   api-tests-base: &api-tests-base
     <<: *api
-    environment:
+    environment: &db_test_environment
       POSTGRES_HOST: ${POSTGRES_HOST:-test-db}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -64,8 +64,6 @@ services:
 
   api-tests-ci:
     <<: *api-tests-base
-    environment:
-      POSTGRES_PORT: 15432
 
   api-tests-local:
     <<: *api-tests-base
