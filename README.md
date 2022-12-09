@@ -68,7 +68,7 @@ The purpose of the app is to compute a metric based on a rolling window between 
 
 - Here we would like to test the maximum especially for critical parts like the API response.
 - I have added tests to most of the API functions and to our FastAPI metrics target endpoint.\
-Tests can be run with `make run_api_tests_local` and then `docker exec -it [container_name] pytest -v`
+Tests can be run with `make run_api_tests_local` and then `docker exec -it [container_name] pytest -v` <span id='tests'></span>
 - The code that populates the data to the database is missing, we should test with a test db that the populator is adding the data and creating the requested indexes.
 - We can test the data preprocessing functions to convert the date columns to the ISO format.
 
@@ -220,3 +220,34 @@ The end choice of the technology will depend on the costs of different cloud inf
 ## Next steps:
 - Add test coverage for the populator codebase `pipeline`.
 - Add Continuous integration (CI) with Github actions to run all unit tests at each commit.
+
+## Github Action Remark:
+Actions are still failing:
+For pre-commit hook jobs the problem should come from a bug in isort since the pre-commit is working fine locally:
+```
+➜  syrup_tech_take_home_test git:(master) ✗ pre-commit run --all-files
+black....................................................................Passed
+isort....................................................................Passed
+Check python ast.........................................................Passed
+Check docstring is first.................................................Passed
+Debug Statements (Python)................................................Passed
+Detect Private Key.......................................................Passed
+Forbid new submodules....................................................Passed
+Mixed line ending........................................................Passed
+Trim Trailing Whitespace.................................................Passed
+Fix End of Files.........................................................Passed
+Tests should end in _test.py.............................................Passed
+Check for added large files..............................................Passed
+Check for case conflicts.................................................Passed
+Check for merge conflicts................................................Passed
+Check for broken symlinks............................(no files to check)Skipped
+Fix double quoted strings................................................Passed
+Check JSON...........................................(no files to check)Skipped
+Pretty format JSON...................................(no files to check)Skipped
+Check Yaml...............................................................Passed
+Sort simple YAML files...............................(no files to check)Skipped
+flake8...................................................................Passed
+➜  syrup_tech_take_home_test git:(master) ✗
+```
+
+- For the api tests, there is some docker-compose config that I have to check, but tests run locally as described [here](#tests)
