@@ -51,7 +51,7 @@ services:
   api-tests-base: &api-tests-base
     <<: *api
     environment:
-      POSTGRES_HOST: test-db
+      POSTGRES_HOST: ${POSTGRES_HOST:-test-db}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       DB_NAME: ${POSTGRES_DB_NAME:-postgres}
