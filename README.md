@@ -50,6 +50,8 @@ To try different input values for `ticker`, `start` and `end` dates ... you can 
 The purpose of the app is to compute a metric based on a rolling window between a start and an end date.
 
 ### Base idea
+- We have an analytics problem at hand, where we want to make an aggregation on a column, that is better handled by an OLAP database that will be columnar, but an OLAP database generally don't serve data in melliseceonds and needs other layer to become a good choice for fast serving called a cube. For the simplicity and since we don't have big data here, we will use postgres: an OLTP database.
+
 - The base idea of implementing this in a web app would be to have a have an app that will load the `dataset in memory at startup time in a pandas DataFrame`, and for each call will perform the filtering and the rolling window metric calculation on the dataframe.
 - Here the choice of pandas is because of the support of rolling window aggregation calculation out of the box.
 - But a dataframe deosn't support indexes for fast queries or at least supports them but with some complexity and not simple to have multi-column index, that's why filtering on date and ticker won't be fast. But of course for our case ~1M this should work without problems.
@@ -65,7 +67,6 @@ The purpose of the app is to compute a metric based on a rolling window between 
 ## Implementation Discussion
 
 ### 1- If you didn’t implement tests, what kind of testing would you like to see for this application
-- We have an analytics problem at hand, where we want to make an aggregation on a column, that is better handled by an OLAP database that will be columnar, but an OLAP database generally don't serve data in melliseceonds and needs other layer to become a good choice for fast serving called a cube. For the simplicity and since we don't have big data here, we will use postgres: an OLTP database.
 - Here we would like to test the maximum especially for critical parts like the API response.
 - I have added tests to most of the API functions and to our FastAPI metrics target endpoint.\
 Tests can be run with `make run_api_tests_local` and then `docker exec -it [container_name] pytest -v` <span id='tests'></span>
@@ -142,6 +143,7 @@ By pre-aggregation here we mean that:
 - Another thing to consider is caching. By having another layer where the API will do the look-up before querying the database.
 
 **Remark**:\
+<span id="cube"></span>
 Both `pre-aggregation` and `caching` are used by BI tools for faster dashboarding and fast calculation of aggregations. This layer is generally called a cube (eg: [cube.dev](https://cube.dev/)). They can be used with postgres database in our case. But generally they are used with OLAP databases to make serving faster.
 
 ### 4- If it had to serve many queries at once — when would it start to break and how
@@ -166,6 +168,11 @@ This introduces some trandoffs between `availability` and `strong consistency of
 
 ### 5 - If it had to serve queries over larger datasets — when would it start to break and how would you scale past that point?
 
+- If we start having larger datasets the way to go is to use a database that fits this analytics problem => OLAP DB that perform better with this type of aggregation. Then a choice of a database like BigQuery and Snowflake with the ticker and time partitioning and clustering would be considered. \
+But the implementation of a cube layer is essential for fast serving as explained [here](#cube)
+
+
+**If we find the the chosen start and end date difference is not big, then we can containue with an OLTP database and rely on pandas to compute the rolling window aggregation since it won't be a have calculation: In that case the parts below should be considered**
 - If we serve the queries over large datasets then we can hit storage scaling problems where we can `no more scale vertically` our database instance, \
 or we can start having slower queries due to the large search space and reduced DB cache compared to the size of the table and the indexes => We need to read from disk more often.
 
