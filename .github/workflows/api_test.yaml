@@ -14,6 +14,8 @@ jobs:
         run: 	COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build api-tests-ci
       - name: Run container
         run: 	COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose run -d api-tests-ci /bin/bash
+      - name: Sleep
+        run: sleep 10
       - name: Debug containers
         run: 	docker ps
       - name: Run tests

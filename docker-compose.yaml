@@ -29,7 +29,8 @@ services:
     build: ./pipeline
     # command: tail -F anything
     depends_on:
-      - db
+      db:
+        condition: service_started
     environment: &db_environment
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
@@ -42,7 +43,8 @@ services:
     build: ./api
     # command: tail -F anything
     depends_on:
-      - db
+      db:
+        condition: service_started
     ports:
       - "8000:8000"
     environment:
@@ -57,22 +59,32 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       DB_NAME: ${POSTGRES_DB_NAME:-postgres}
     depends_on:
-      - test-db
+      test-db:
+        condition: service_started
     links:
       - test-db:test-db
     container_name: api_tests
     command: pytest -v
 
-  api-tests-ci:
-    <<: *api-tests-base
-    environment:
-      <<: *db_test_environment
-      POSTGRES_PORT: ${POSTGRES_PORT:-15432}
-
   api-tests-local:
     <<: *api-tests-base
     volumes:
       - ./api:/usr/src/app/
+
+  api-tests-ci:
+    container_name: api-tests-ci
+    build: ./api
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST:-db}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: ${POSTGRES_DB_NAME:-postgres}
+
+    depends_on:
+      db:
+        condition: service_started
+    command: pytest -v
 
 volumes:
   db-volume:
