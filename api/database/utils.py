@@ -39,6 +39,7 @@ class DbConfig:
 # TODO fix how to pass port (expore docker ENV)
 def get_db_config(db_name: str = 'postgres') -> DbConfig:
     print('POSTGRES_HOST: ', os.environ.get('POSTGRES_HOST'))
+    print('POSTGRES_PORT: ', os.environ.get('POSTGRES_PORT'))
     return DbConfig(
         host=os.environ.get('POSTGRES_HOST') or 'db',
         port=os.environ.get('POSTGRES_PORT') or 5432,
