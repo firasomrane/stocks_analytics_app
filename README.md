@@ -74,7 +74,7 @@ Tests can be run with `make run_api_tests_local` and then `docker exec -it [cont
 - We can test the data preprocessing functions to convert the date columns to the ISO format.
 
 ### 2- How did you handle and validate user inputs?
-- I added custom validation for the input parameters (`ticker`, `date`, ...). They are defined in `api/apis/stock_functions.py` file like `StartDateValidation`.\
+- I added custom validation for the input parameters (`start`, `metric`, ...). They are defined in `api/apis/stock_functions.py` file like `ComparisonValidation`.\
 I have added tests for these validations.
 - I relied also on FastAPI built in parameters validation tools like `Query(default=Required, min_length=1, max_length=5)` for `ticker` parameters.
 - For each invalid input a HTTPError with status code 422 is returned with message detailing the problem:\

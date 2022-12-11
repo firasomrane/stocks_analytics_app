@@ -7,13 +7,16 @@ import pandas as pd
 from apis.schemas import StockMetric
 from models.stock import Stock
 from sqlalchemy.orm import Session
-from validation.validation import Validation
+from validation.validation import ComparisonValidation, TwoElementsComparisonValidation, ValueBelongsToFieldValidation
 
 logger = logging.getLogger(__name__)
 
 
 ISO_DATE_FORMAT = '%Y-%m-%d'
 START_DATE = '2010-01-04'
+VALID_PRICE_COLUMN_VALUES = ['high_price', 'low_price', 'open_price', 'close_price']
+MAX_ROLLING_WINDOW = 100
+MIN_ROLLING_WINDOW = 1
 
 
 class Metric(Enum):
@@ -49,91 +52,26 @@ def get_agg_from_rolling_df(
         return rolling_df.std()
 
 
-class StartDateValidation(Validation):
-    def __init__(self, start_date: str) -> None:
-        super().__init__()
-        self.start_date = start_date
-
-    @property
-    def is_valid(self) -> bool:
-        return self.start_date >= START_DATE
-
-    @property
-    def error_message(self) -> str:
-        return f'Start should be bigger or equal to {START_DATE}'
-
-
-class MetricValidation(Validation):
-    def __init__(self, metric: str) -> None:
-        super().__init__()
-        self.metric = metric
-
-    @property
-    def is_valid(self) -> bool:
-        return self.metric in Metric.keys()
-
-    @property
-    def error_message(self) -> str:
-        return f'The metric {self.metric} is not supported, please choose one from {Metric.keys()}'
-
-
-MAX_ROLLING_WINDOW = 100
-MIN_ROLLING_WINDOW = 1
-
-
-class RollingWindowValidation(Validation):
-    def __init__(self, rolling_window: int) -> None:
-        super().__init__()
-        self.rolling_window = rolling_window
-
-    @property
-    def is_valid(self) -> bool:
-        return MIN_ROLLING_WINDOW <= self.rolling_window <= MAX_ROLLING_WINDOW
-
-    @property
-    def error_message(self) -> str:
-        return f'rolling window should be between {MIN_ROLLING_WINDOW} and {MAX_ROLLING_WINDOW}'
-
-
-class EndBiggerThanStartValidation(Validation):
-    def __init__(self, start: str, end: str) -> None:
-        super().__init__()
-        self.start = start
-        self.end = end
-
-    @property
-    def is_valid(self) -> bool:
-        return self.start <= self.end
-
-    @property
-    def error_message(self) -> str:
-        return 'Start date should be smaller or equal to end date'
-
-
-class PriceColumnValidation(Validation):
-    valid_price_column_values = ['high_price', 'low_price', 'open_price', 'close_price']
-
-    def __init__(self, price_column: str) -> None:
-        super().__init__()
-        self.price_column = price_column
-
-    @property
-    def is_valid(self) -> bool:
-        return self.price_column in self.valid_price_column_values
-
-    @property
-    def error_message(self) -> str:
-        return f'Price column should be one of {self.valid_price_column_values}'
-
-
 def validate_query_parameters(start: str, end: str, price_column: str, metric: Metric, rolling_window: int):
 
     validations = [
-        StartDateValidation(start),
-        MetricValidation(metric),
-        RollingWindowValidation(rolling_window),
-        EndBiggerThanStartValidation(start, end),
-        PriceColumnValidation(price_column),
+        ComparisonValidation(field_name='start', field_value=start, min_value=START_DATE),
+        ValueBelongsToFieldValidation(field_name='metric', field_value=metric, valid_values=Metric),
+        ComparisonValidation(
+            field_name='rolling_window',
+            field_value=rolling_window,
+            max_value=MAX_ROLLING_WINDOW,
+            min_value=MIN_ROLLING_WINDOW,
+        ),
+        TwoElementsComparisonValidation(
+            should_be_smaller_name='start',
+            should_be_smaller_value=start,
+            should_be_bigger_name='end',
+            should_be_bigger_value=end,
+        ),
+        ValueBelongsToFieldValidation(
+            field_name='price_column', field_value=price_column, valid_values=VALID_PRICE_COLUMN_VALUES
+        ),
     ]
 
     for validation in validations:
@@ -158,6 +96,7 @@ def get_stock_metric(
     rolling_window: int,
 ) -> List[StockMetric]:
 
+    # TODO check if pydantic validation is better https://docs.pydantic.dev/usage/validators/
     validate_query_parameters(
         start=start,
         end=end,
