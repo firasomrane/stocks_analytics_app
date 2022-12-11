@@ -56,7 +56,7 @@ def populate_db_test():
 
 
 @dataclass
-class TestCase:
+class StockMetricTestCase:
     price_column: str
     metric: str
     rolling_window: int
@@ -68,7 +68,7 @@ class TestCase:
 
 
 TEST_CASES = [
-    TestCase(
+    StockMetricTestCase(
         price_column='open_price',
         metric='max',
         rolling_window=10,
@@ -82,7 +82,7 @@ TEST_CASES = [
             {'date': '2010-01-16', 'metric': 10.00},
         ],
     ),
-    TestCase(
+    StockMetricTestCase(
         price_column='open_price',
         metric='max',
         rolling_window=10,
@@ -95,7 +95,7 @@ TEST_CASES = [
             {'date': '2010-01-14', 'metric': 10.00},
         ],
     ),
-    TestCase(
+    StockMetricTestCase(
         price_column='open_price',
         metric='mean',
         rolling_window=10,
@@ -108,7 +108,7 @@ TEST_CASES = [
             {'date': '2010-01-13', 'metric': 10.00},
         ],
     ),
-    TestCase(
+    StockMetricTestCase(
         price_column='high_price',
         metric='max',
         rolling_window=10,
@@ -122,7 +122,7 @@ TEST_CASES = [
             {'date': '2010-01-16', 'metric': 20.00},
         ],
     ),
-    TestCase(
+    StockMetricTestCase(
         price_column='high_price',
         metric='standard_deviation',
         rolling_window=10,
@@ -136,7 +136,7 @@ TEST_CASES = [
             {'date': '2010-01-06', 'metric': ''},
         ],
     ),
-    TestCase(
+    StockMetricTestCase(
         price_column='high_price',
         metric='max',
         rolling_window=10,
@@ -146,7 +146,7 @@ TEST_CASES = [
         expected_status_code=422,
         expected_result={'detail': 'Start should be bigger or equal to 2010-01-04'},
     ),
-    TestCase(
+    StockMetricTestCase(
         price_column='high_price',
         metric='non_existing_metric',
         rolling_window=10,
@@ -158,7 +158,7 @@ TEST_CASES = [
             'detail': "The metric non_existing_metric is not supported, please choose one from ['median', 'mean', 'min', 'max', 'standard_deviation']"  # noqa
         },
     ),
-    TestCase(
+    StockMetricTestCase(
         price_column='non_existing_column',
         metric='max',
         rolling_window=10,
